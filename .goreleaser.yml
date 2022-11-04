@@ -1,5 +1,5 @@
 builds:
-  - binary: goimportsort
+  - binary: goimportssort
     goos:
       - linux
       - freebsd
