@@ -3,6 +3,7 @@ goimportssort sorts your Go import lines in three categories: inbuilt, external 
 
 	$ go get -u github.com/bonsai-oss/goimportssort
 */
+
 package main
 
 import (
@@ -13,27 +14,29 @@ import (
 	"go/parser"
 	"go/token"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
 	"github.com/dave/dst/dstutil"
+	"github.com/hashicorp/go-multierror"
 	"golang.org/x/mod/modfile"
 	"golang.org/x/tools/go/packages"
 )
 
 var (
-	list             = flag.Bool("l", false, "write results to stdout")
-	write            = flag.Bool("w", false, "write result to (source) file instead of stdout")
-	localPrefix      = flag.String("local", "", "put imports beginning with this string after 3rd-party packages; comma-separated list")
-	verbose          bool // verbose logging
-	standardPackages = make(map[string]struct{})
+	list                  = flag.Bool("l", false, "write results to stdout")
+	write                 = flag.Bool("w", false, "write result to (source) file instead of stdout")
+	localPrefix           = flag.String("local", "", "put imports beginning with this string after 3rd-party packages; comma-separated list")
+	verbose               bool // verbose logging
+	standardPackages      = make(map[string]struct{})
+	standardPackagesMutex = sync.Mutex{}
 )
 
 // impModel is used for storing import information
@@ -53,10 +56,10 @@ func (m impModel) string() string {
 
 // main is the entry point of the program
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	runtime.GOMAXPROCS(runtime.NumCPU() * 2)
 
 	err := goImportsSortMain()
-	if err != nil {
+	if err.(*multierror.Error).ErrorOrNil() != nil {
 		log.Fatalln(err)
 	}
 }
@@ -73,7 +76,7 @@ func goImportsSortMain() error {
 	if verbose {
 		log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	} else {
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 	}
 
 	if *localPrefix == "" {
@@ -123,12 +126,34 @@ func isGoFile(f os.FileInfo) bool {
 
 // walkDir walks through a path, processing all go files recursively in a directory
 func walkDir(path string) error {
-	return filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
-		if err == nil && isGoFile(f) {
-			_, err = processFile(path, nil, os.Stdout)
+	errChan := make(chan error)
+	wg := new(sync.WaitGroup)
+	var result error
+
+	go func() {
+		for schmutz := range errChan {
+			result = multierror.Append(result, schmutz)
 		}
-		return err
-	})
+	}()
+
+	loop := func(path string, info os.FileInfo, err error) error {
+		if err == nil && isGoFile(info) {
+			wg.Add(1)
+			go processFileAsync(path, nil, os.Stdout, errChan, wg)
+		}
+		return nil
+	}
+	result = multierror.Append(result, filepath.Walk(path, loop))
+	wg.Wait()
+	close(errChan)
+
+	return result
+}
+
+func processFileAsync(filename string, in io.Reader, out io.Writer, errChan chan error, wg *sync.WaitGroup) {
+	defer wg.Done()
+	_, err := processFile(filename, in, out)
+	errChan <- err
 }
 
 // processFile reads a file and processes the content, then checks if they're equal.
@@ -144,7 +169,7 @@ func processFile(filename string, in io.Reader, out io.Writer) ([]byte, error) {
 		in = f
 	}
 
-	src, err := ioutil.ReadAll(in)
+	src, err := io.ReadAll(in)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +185,7 @@ func processFile(filename string, in io.Reader, out io.Writer) ([]byte, error) {
 			_, _ = fmt.Fprintln(out, string(res))
 		}
 		if *write {
-			err = ioutil.WriteFile(filename, res, 0)
+			err = os.WriteFile(filename, res, 0)
 			if err != nil {
 				return nil, err
 			}
@@ -168,8 +193,7 @@ func processFile(filename string, in io.Reader, out io.Writer) ([]byte, error) {
 		if !*list && !*write {
 			return res, nil
 		}
-	} else {
-		log.Println("file has not been changed")
+		log.Printf("file %+q has been changed", filename)
 	}
 
 	return res, err
@@ -318,7 +342,9 @@ func loadStandardPackages() error {
 	pkgs, err := packages.Load(nil, "std")
 	if err == nil {
 		for _, p := range pkgs {
+			standardPackagesMutex.Lock()
 			standardPackages[p.PkgPath] = struct{}{}
+			standardPackagesMutex.Unlock()
 		}
 	}
 
@@ -327,7 +353,9 @@ func loadStandardPackages() error {
 
 // isStandardPackage checks if a package string is included in the standardPackages map
 func isStandardPackage(pkg string) bool {
+	standardPackagesMutex.Lock()
 	_, ok := standardPackages[pkg]
+	standardPackagesMutex.Unlock()
 	return ok
 }
 
@@ -339,7 +367,7 @@ func getModuleName() string {
 		return ""
 	}
 
-	goModBytes, err := ioutil.ReadFile(filepath.Join(root, "go.mod"))
+	goModBytes, err := os.ReadFile(filepath.Join(root, "go.mod"))
 	if err != nil {
 		log.Println("error when reading mod file: ", err)
 		return ""
