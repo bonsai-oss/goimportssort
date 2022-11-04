@@ -15,7 +15,7 @@ Goimports will not categorize your imports when wrongly formatted. PRs to add in
 
 ## Installation
 ```
-$ go get -u github.com/bonsai-oss/goimportssort
+$ go install github.com/bonsai-oss/goimportssort@latest
 ```
 
 ## Usage
