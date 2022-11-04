@@ -1,6 +1,7 @@
 /*
 goimportssort sorts your Go import lines in three categories: inbuilt, external and local.
-     $ go get -u github.com/bonsai-oss/goimportssort
+
+	$ go get -u github.com/bonsai-oss/goimportssort
 */
 package main
 
@@ -20,12 +21,11 @@ import (
 	"sort"
 	"strings"
 
-	"golang.org/x/mod/modfile"
-	"golang.org/x/tools/go/packages"
-
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
 	"github.com/dave/dst/dstutil"
+	"golang.org/x/mod/modfile"
+	"golang.org/x/tools/go/packages"
 )
 
 var (
