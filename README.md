@@ -1,4 +1,5 @@
-# go-imports-sort ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/AanZee/goimportssort) ![Test](https://github.com/AanZee/goimportssort/workflows/Test/badge.svg) ![golangci-lint](https://github.com/AanZee/goimportssort/workflows/golangci-lint/badge.svg)
+_fork of https://github.com/bonsai-oss/goimportssort_
+# go-imports-sort ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/bonsai-oss/goimportssort) ![Test](https://github.com/bonsai-oss/goimportssort/workflows/Test/badge.svg) ![golangci-lint](https://github.com/bonsai-oss/goimportssort/workflows/golangci-lint/badge.svg)
 This tool aims to automatically fix the order of golang imports. It will split your imports into three categories.
 
 ## Features
@@ -14,7 +15,7 @@ Goimports will not categorize your imports when wrongly formatted. PRs to add in
 
 ## Installation
 ```
-$ go get -u github.com/AanZee/goimportssort
+$ go get -u github.com/bonsai-oss/goimportssort
 ```
 
 ## Usage
@@ -41,8 +42,8 @@ import (
 	"log"
 	APZ "bitbucket.org/example/package/name"
 	APA "bitbucket.org/example/package/name"
-	"github.com/AanZee/goimportssort/package2"
-	"github.com/AanZee/goimportssort/package1"
+	"github.com/bonsai-oss/goimportssort/package2"
+	"github.com/bonsai-oss/goimportssort/package1"
 )
 import (
 	"net/http/httptest"
@@ -69,7 +70,7 @@ import (
     "bitbucket.org/example/package/name3"
     "bitbucket.org/example/package/name4"
 
-    "github.com/AanZee/goimportssort/package1"
-    "github.com/AanZee/goimportssort/package2"
+    "github.com/bonsai-oss/goimportssort/package1"
+    "github.com/bonsai-oss/goimportssort/package2"
 )
 ```

@@ -1,6 +1,6 @@
 /*
 goimportssort sorts your Go import lines in three categories: inbuilt, external and local.
-     $ go get -u github.com/AanZee/goimportssort
+     $ go get -u github.com/bonsai-oss/goimportssort
 */
 package main
 

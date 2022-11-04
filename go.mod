@@ -1,4 +1,4 @@
-module github.com/AanZee/goimportssort
+module github.com/bonsai-oss/goimportssort
 
 go 1.14
 

@@ -9,7 +9,7 @@ import (
 
 func TestProcessFile(t *testing.T) {
 	asserts := assert.New(t)
-	*localPrefix = "github.com/AanZee/goimportssort"
+	*localPrefix = "github.com/bonsai-oss/goimportssort"
 	reader := strings.NewReader(`package main
 
 // builtin
@@ -25,9 +25,9 @@ import (
 	"bitbucket.org/example/package/name3" // foopsie
 	"bitbucket.org/example/package/name4"
 	
-	"github.com/AanZee/goimportssort/package1"
+	"github.com/bonsai-oss/goimportssort/package1"
 	// a
-	"github.com/AanZee/goimportssort/package2"
+	"github.com/bonsai-oss/goimportssort/package2"
 	
 	/*
 		mijn comment
@@ -54,8 +54,8 @@ import (
 	"bitbucket.org/example/package/name3"
 	"bitbucket.org/example/package/name4"
 
-	"github.com/AanZee/goimportssort/package1"
-	"github.com/AanZee/goimportssort/package2"
+	"github.com/bonsai-oss/goimportssort/package1"
+	"github.com/bonsai-oss/goimportssort/package2"
 )
 
 func main() {
@@ -71,13 +71,13 @@ func main() {
 
 func TestProcessFile_SingleImport(t *testing.T) {
 	asserts := assert.New(t)
-	*localPrefix = "github.com/AanZee/goimportssort"
+	*localPrefix = "github.com/bonsai-oss/goimportssort"
 
 	reader := strings.NewReader(
 		`package main
 
 
-import "github.com/AanZee/goimportssort/package1"
+import "github.com/bonsai-oss/goimportssort/package1"
 
 
 func main() {
@@ -90,7 +90,7 @@ func main() {
 		`package main
 
 import (
-	"github.com/AanZee/goimportssort/package1"
+	"github.com/bonsai-oss/goimportssort/package1"
 )
 
 func main() {
@@ -101,13 +101,13 @@ func main() {
 
 func TestProcessFile_GenericsSupport(t *testing.T) {
 	asserts := assert.New(t)
-	*localPrefix = "github.com/AanZee/goimportssort"
+	*localPrefix = "github.com/bonsai-oss/goimportssort"
 
 	reader := strings.NewReader(
 		`package main
 
 
-import "github.com/AanZee/goimportssort/package1"
+import "github.com/bonsai-oss/goimportssort/package1"
 
 func filter[T any](ss []T, test func(T) bool) (ret []T) {
 	for _, s := range ss {
@@ -128,7 +128,7 @@ func main() {
 		`package main
 
 import (
-	"github.com/AanZee/goimportssort/package1"
+	"github.com/bonsai-oss/goimportssort/package1"
 )
 
 func filter[T any](ss []T, test func(T) bool) (ret []T) {
@@ -148,7 +148,7 @@ func main() {
 
 func TestProcessFile_EmptyImport(t *testing.T) {
 	asserts := assert.New(t)
-	*localPrefix = "github.com/AanZee/goimportssort"
+	*localPrefix = "github.com/bonsai-oss/goimportssort"
 
 	reader := strings.NewReader(`package main
 
@@ -167,7 +167,7 @@ func main() {
 
 func TestProcessFile_ReadMeExample(t *testing.T) {
 	asserts := assert.New(t)
-	*localPrefix = "github.com/AanZee/goimportssort"
+	*localPrefix = "github.com/bonsai-oss/goimportssort"
 
 	reader := strings.NewReader(`package main
 
@@ -176,8 +176,8 @@ import (
 	"log"
 	APZ "bitbucket.org/example/package/name"
 	APA "bitbucket.org/example/package/name"
-	"github.com/AanZee/goimportssort/package2"
-	"github.com/AanZee/goimportssort/package1"
+	"github.com/bonsai-oss/goimportssort/package2"
+	"github.com/bonsai-oss/goimportssort/package1"
 )
 import (
 	"net/http/httptest"
@@ -202,19 +202,19 @@ import (
 	"bitbucket.org/example/package/name3"
 	"bitbucket.org/example/package/name4"
 
-	"github.com/AanZee/goimportssort/package1"
-	"github.com/AanZee/goimportssort/package2"
+	"github.com/bonsai-oss/goimportssort/package1"
+	"github.com/bonsai-oss/goimportssort/package2"
 )
 `, string(output))
 }
 
 func TestProcessFile_WronglyFormattedGo(t *testing.T) {
 	asserts := assert.New(t)
-	*localPrefix = "github.com/AanZee/goimportssort"
+	*localPrefix = "github.com/bonsai-oss/goimportssort"
 
 	reader := strings.NewReader(
 		`package main
-import "github.com/AanZee/goimportssort/package1"
+import "github.com/bonsai-oss/goimportssort/package1"
 
 
 func main() {
@@ -227,7 +227,7 @@ func main() {
 		`package main
 
 import (
-	"github.com/AanZee/goimportssort/package1"
+	"github.com/bonsai-oss/goimportssort/package1"
 )
 
 func main() {
@@ -241,5 +241,5 @@ func TestGetModuleName(t *testing.T) {
 
 	name := getModuleName()
 
-	asserts.Equal("github.com/AanZee/goimportssort", name)
+	asserts.Equal("github.com/bonsai-oss/goimportssort", name)
 }
