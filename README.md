@@ -1,4 +1,4 @@
-_fork of https://github.com/bonsai-oss/goimportssort_
+_fork of https://github.com/AanZee/goimportssort_
 # go-imports-sort ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/bonsai-oss/goimportssort) ![Test](https://github.com/bonsai-oss/goimportssort/workflows/Test/badge.svg) ![golangci-lint](https://github.com/bonsai-oss/goimportssort/workflows/golangci-lint/badge.svg)
 This tool aims to automatically fix the order of golang imports. It will split your imports into three categories.
 
