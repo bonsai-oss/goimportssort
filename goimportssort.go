@@ -56,7 +56,7 @@ func (m impModel) string() string {
 
 // main is the entry point of the program
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU() * 2)
+	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	err := goImportsSortMain()
 	if err.(*multierror.Error).ErrorOrNil() != nil {
