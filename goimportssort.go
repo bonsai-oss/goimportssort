@@ -58,9 +58,15 @@ func (m impModel) string() string {
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	err := goImportsSortMain()
-	if err.(*multierror.Error).ErrorOrNil() != nil {
-		log.Fatalln(err)
+	switch err := goImportsSortMain().(type) {
+	case *multierror.Error:
+		if err.ErrorOrNil() != nil {
+			log.Fatal(err)
+		}
+	default:
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 

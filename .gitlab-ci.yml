@@ -62,7 +62,23 @@ semantic_release:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     - get-next-version -f json
-    - VERSION="$(get-next-version -f json | jq -r 'select(.hasNextVersion==true) | .version')"
+    - VERSION="$(get-next-version -f json --prefix 'v' | jq -r 'select(.hasNextVersion==true) | .version')"
     - echo $VERSION
-    - test -z "$VERSION" || curl --silent --request POST --header "PRIVATE-TOKEN:${CI_BOT_TOKEN}" "https://${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/repository/tags?tag_name=v${VERSION}&ref=${CI_DEFAULT_BRANCH}" | jq
+    - test -z "$VERSION" || curl --silent --request POST --header "PRIVATE-TOKEN:${CI_BOT_TOKEN}" "https://${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/repository/tags?tag_name=${VERSION}&ref=${CI_DEFAULT_BRANCH}" | jq
 
+docker build:
+  stage: release
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [ "" ]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(printf "%s:%s" "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - >-
+      /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+      --destination "${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}"
