@@ -1,6 +1,9 @@
 _fork of https://github.com/AanZee/goimportssort_
 
-# go-imports-sort ![Gitlab code coverage](https://img.shields.io/gitlab/pipeline-coverage/bonsai-oss/tools/goimportssort?branch=master&style=plastic) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/bonsai-oss/goimportssort/Go)  ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/bonsai-oss/goimportssort)
+# go-imports-sort 
+![Gitlab code coverage](https://img.shields.io/gitlab/pipeline-coverage/bonsai-oss/tools/goimportssort?branch=master)
+![GitHub Workflow Status Build](https://img.shields.io/github/actions/workflow/status/bonsai-oss/goimportssort/go.yml?branch=master)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/bonsai-oss/goimportssort)
 
 This tool aims to automatically fix the order of golang imports. It will split your imports into three categories.
 
