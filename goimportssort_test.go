@@ -70,6 +70,45 @@ func main() {
 	asserts.Equal(want, string(output))
 }
 
+func TestProcessFile_Order(t *testing.T) {
+	asserts := assert.New(t)
+	*localPrefix = "github.com/bonsai-oss/goimportssort"
+
+	reader := strings.NewReader(
+		`package main
+
+import "fmt"
+
+import "github.com/exampleUser/examplePackage"
+
+import "github.com/bonsai-oss/goimportssort/package1"
+
+
+func main() {
+	fmt.Println("Hello!")
+}`)
+	*order = "lei"
+	output, err := processFile("", reader, os.Stdout)
+	*order = DefaultOrder // reset order for other tests
+	asserts.NotEqual(nil, output)
+	asserts.Equal(nil, err)
+	asserts.Equal(
+		`package main
+
+import (
+	"github.com/bonsai-oss/goimportssort/package1"
+
+	"github.com/exampleUser/examplePackage"
+
+	"fmt"
+)
+
+func main() {
+	fmt.Println("Hello!")
+}
+`, string(output))
+}
+
 func TestProcessFile_SingleImport(t *testing.T) {
 	asserts := assert.New(t)
 	*localPrefix = "github.com/bonsai-oss/goimportssort"
@@ -243,4 +282,75 @@ func TestGetModuleName(t *testing.T) {
 	name := getModuleName()
 
 	asserts.Equal("github.com/bonsai-oss/goimportssort", name)
+}
+
+func TestSortString(t *testing.T) {
+	for _, testCase := range []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "empty",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "different chars",
+			input:    "cab",
+			expected: "abc",
+		},
+		{
+			name:     "identical chars",
+			input:    "caba",
+			expected: "aabc",
+		},
+		{
+			name:     "chars with numbers and symbols",
+			input:    "caba!@#$%^&*()_+1234567890",
+			expected: "!#$%&()*+0123456789@^_aabc",
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			asserts := assert.New(t)
+
+			actual := sortString(testCase.input)
+
+			asserts.Equal(testCase.expected, actual)
+		})
+	}
+}
+
+func TestIsGoFile(t *testing.T) {
+	for _, testCase := range []struct {
+		name          string
+		inputFilePath string
+		expected      bool
+	}{
+		{
+			name:          "go file",
+			inputFilePath: "goimportssort.go",
+			expected:      true,
+		},
+		{
+			name:          "non go file",
+			inputFilePath: ".gitignore",
+			expected:      false,
+		},
+		{
+			name:          "directory",
+			inputFilePath: ".gitlab",
+			expected:      false,
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			asserts := assert.New(t)
+
+			info, _ := os.Stat(testCase.inputFilePath)
+
+			actual := isGoFile(info)
+
+			asserts.Equal(testCase.expected, actual)
+		})
+	}
 }
