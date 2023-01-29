@@ -33,6 +33,7 @@ import (
 const DefaultOrder = "iel"
 
 var (
+	maxConcurrency        = flag.Int("p", runtime.NumCPU(), "number of files to process concurrently")
 	list                  = flag.Bool("l", false, "write results to stdout")
 	write                 = flag.Bool("w", false, "write result to (source) file instead of stdout")
 	localPrefix           = flag.String("local", "", "put imports beginning with this string after 3rd-party packages; comma-separated list")
@@ -59,7 +60,7 @@ func (m impModel) string() string {
 
 // main is the entry point of the program
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	runtime.GOMAXPROCS(*maxConcurrency)
 
 	switch err := goImportsSortMain().(type) {
 	case *multierror.Error:
@@ -146,8 +147,8 @@ func walkDir(path string) error {
 	var result error
 
 	go func() {
-		for schmutz := range errChan {
-			result = multierror.Append(result, schmutz)
+		for err := range errChan {
+			result = multierror.Append(result, err)
 		}
 	}()
 
