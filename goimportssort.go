@@ -8,6 +8,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -27,6 +28,7 @@ import (
 	"github.com/dave/dst/dstutil"
 	"github.com/hashicorp/go-multierror"
 	"golang.org/x/mod/modfile"
+	"golang.org/x/sync/semaphore"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -38,6 +40,7 @@ var (
 	write                 = flag.Bool("w", false, "write result to (source) file instead of stdout")
 	localPrefix           = flag.String("local", "", "put imports beginning with this string after 3rd-party packages; comma-separated list")
 	order                 = flag.String("o", DefaultOrder, "custom the order of the section of imports. e.g. ixl means inbuilt, external, and local")
+	concurrencySemaphore  *semaphore.Weighted
 	verbose               bool // verbose logging
 	standardPackages      = make(map[string]struct{})
 	standardPackagesMutex = sync.Mutex{}
@@ -60,8 +63,6 @@ func (m impModel) string() string {
 
 // main is the entry point of the program
 func main() {
-	runtime.GOMAXPROCS(*maxConcurrency)
-
 	switch err := goImportsSortMain().(type) {
 	case *multierror.Error:
 		if err.ErrorOrNil() != nil {
@@ -88,6 +89,9 @@ func goImportsSortMain() error {
 	} else {
 		log.SetOutput(io.Discard)
 	}
+
+	runtime.GOMAXPROCS(*maxConcurrency)
+	concurrencySemaphore = semaphore.NewWeighted(int64(*maxConcurrency))
 
 	// check if the order only contains valid characters
 	if sortString(*order) != sortString(DefaultOrder) {
@@ -166,7 +170,12 @@ func walkDir(path string) error {
 	return result
 }
 
+// processFileAsync wraps processFile to allow concurrency
 func processFileAsync(filename string, in io.Reader, out io.Writer, errChan chan error, wg *sync.WaitGroup) {
+	if err := concurrencySemaphore.Acquire(context.Background(), 1); err != nil {
+		errChan <- err
+	}
+	defer concurrencySemaphore.Release(1)
 	defer wg.Done()
 	_, err := processFile(filename, in, out)
 	errChan <- err

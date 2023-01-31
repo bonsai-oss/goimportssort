@@ -31,12 +31,15 @@ $ go install github.com/bonsai-oss/goimportssort@latest
 
 ```
 usage: goimportssort [flags] [path ...]
-  -l    write results to stdout (default false)
+  -l    write results to stdout
   -local string
-        put imports beginning with this string after 3rd-party packages; comma-separated list 
-(default tries to get module name of current directory)
-  -v    verbose logging (default false)
-  -w    write result to (source) file (default false)
+        put imports beginning with this string after 3rd-party packages; comma-separated list
+  -o string
+        custom the order of the section of imports. e.g. ixl means inbuilt, external, and local (default "iel")
+  -p int
+        number of files to process concurrently (default 8)
+  -v    verbose logging
+  -w    write result to (source) file instead of stdout
 ```
 
 Imports will be sorted according to their categories.
