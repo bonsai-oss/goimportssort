@@ -90,6 +90,9 @@ func goImportsSortMain() error {
 		log.SetOutput(io.Discard)
 	}
 
+	if *maxConcurrency < 1 {
+		return errors.New("max concurrency must be greater than 0")
+	}
 	runtime.GOMAXPROCS(*maxConcurrency)
 	concurrencySemaphore = semaphore.NewWeighted(int64(*maxConcurrency))
 
