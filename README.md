@@ -45,7 +45,7 @@ usage: goimportssort [flags] [path ...]
 Imports will be sorted according to their categories.
 
 ```
-$ goimportssort -v -w ./..
+$ goimportssort -v -w .
 ```
 
 For example:
