@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/dave/dst v0.27.2
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	golang.org/x/mod v0.10.0
 	golang.org/x/sync v0.2.0
 	golang.org/x/tools v0.9.1
