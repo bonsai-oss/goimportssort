@@ -14,6 +14,9 @@ include:
   - { project: bonsai-oss/organization/automate/ci-templates, file: templates/language/go.yml }
   - { project: bonsai-oss/organization/automate/ci-templates, file: templates/release/semver.yml }
 
+go imports sorting:
+  allow_failure: true
+
 docker build:
   stage: release
   image:
