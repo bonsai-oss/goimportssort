@@ -1,16 +1,16 @@
 module github.com/bonsai-oss/goimportssort
 
-go 1.23.0
+go 1.24.0
 
-toolchain go1.25.0
+toolchain go1.25.4
 
 require (
 	github.com/dave/dst v0.27.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/mod v0.27.0
-	golang.org/x/sync v0.16.0
-	golang.org/x/tools v0.36.0
+	golang.org/x/mod v0.29.0
+	golang.org/x/sync v0.17.0
+	golang.org/x/tools v0.38.0
 )
 
 require (
