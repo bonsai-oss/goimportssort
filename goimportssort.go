@@ -266,16 +266,24 @@ func process(src []byte) (output []byte, err error) {
 // replaceImports replaces existing imports and handles multiple import statements
 func replaceImports(newImports []byte, node *dst.File) ([]byte, error) {
 	var (
-		output []byte
-		err    error
-		buf    bytes.Buffer
+		output     []byte
+		err        error
+		buf        bytes.Buffer
+		directives []string
 	)
 
-	// remove + update
+	// remove the import declarations, but keep any go directives (e.g.
+	// //go:generate) decorating them: those are significant and must survive the
+	// rebuild of the import block.
 	dstutil.Apply(node, func(cr *dstutil.Cursor) bool {
 		n := cr.Node()
 
 		if decl, ok := n.(*dst.GenDecl); ok && decl.Tok == token.IMPORT {
+			for _, comment := range decl.Decs.Start.All() {
+				if strings.HasPrefix(comment, "//go:") {
+					directives = append(directives, comment)
+				}
+			}
 			cr.Delete()
 		}
 
@@ -286,7 +294,12 @@ func replaceImports(newImports []byte, node *dst.File) ([]byte, error) {
 
 	if err == nil {
 		packageName := node.Name.Name
-		output = bytes.Replace(buf.Bytes(), []byte("package "+packageName), append([]byte("package "+packageName+"\n\n"), newImports...), 1)
+		replacement := []byte("package " + packageName + "\n\n")
+		if len(directives) > 0 {
+			replacement = append(replacement, []byte(strings.Join(directives, "\n")+"\n\n")...)
+		}
+		replacement = append(replacement, newImports...)
+		output = bytes.Replace(buf.Bytes(), []byte("package "+packageName), replacement, 1)
 	} else {
 		log.Println(err)
 	}
