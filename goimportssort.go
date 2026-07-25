@@ -12,6 +12,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/build"
 	"go/parser"
 	"go/token"
 	"io"
@@ -29,21 +30,20 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"golang.org/x/mod/modfile"
 	"golang.org/x/sync/semaphore"
-	"golang.org/x/tools/go/packages"
 )
+
+//go:generate go run gen_stdpackages.go
 
 const DefaultOrder = "iel"
 
 var (
-	maxConcurrency        = flag.Int("p", runtime.NumCPU(), "number of files to process concurrently")
-	list                  = flag.Bool("l", false, "write results to stdout")
-	write                 = flag.Bool("w", false, "write result to (source) file instead of stdout")
-	localPrefix           = flag.String("local", "", "put imports beginning with this string after 3rd-party packages; comma-separated list")
-	order                 = flag.String("o", DefaultOrder, "custom the order of the section of imports. e.g. ixl means inbuilt, external, and local")
-	concurrencySemaphore  *semaphore.Weighted
-	verbose               bool // verbose logging
-	standardPackages      = make(map[string]struct{})
-	standardPackagesMutex = sync.Mutex{}
+	maxConcurrency       = flag.Int("p", runtime.NumCPU(), "number of files to process concurrently")
+	list                 = flag.Bool("l", false, "write results to stdout")
+	write                = flag.Bool("w", false, "write result to (source) file instead of stdout")
+	localPrefix          = flag.String("local", "", "put imports beginning with this string after 3rd-party packages; comma-separated list")
+	order                = flag.String("o", DefaultOrder, "custom the order of the section of imports. e.g. ixl means inbuilt, external, and local")
+	concurrencySemaphore *semaphore.Weighted
+	verbose              bool // verbose logging
 )
 
 // impModel is used for storing import information
@@ -243,10 +243,7 @@ func process(src []byte) (output []byte, err error) {
 		node             *dst.File
 	)
 
-	err = loadStandardPackages()
-	if err == nil {
-		node, err = decorator.ParseFile(fileSet, "", src, parser.ParseComments)
-	}
+	node, err = decorator.ParseFile(fileSet, "", src, parser.ParseComments)
 	if err == nil {
 		convertedImports, err = convertImportsToSlice(node)
 	}
@@ -390,25 +387,27 @@ func sortString(str string) string {
 	return string(charArray)
 }
 
-// loadStandardPackages tries to fetch all golang std packages
-func loadStandardPackages() error {
-	pkgs, err := packages.Load(nil, "std")
-	if err == nil {
-		for _, p := range pkgs {
-			standardPackagesMutex.Lock()
-			standardPackages[p.PkgPath] = struct{}{}
-			standardPackagesMutex.Unlock()
-		}
+// isStandardPackage reports whether the import path belongs to the Go standard
+// library. The go command's fast rule — a standard import path has no dot in its
+// first element — alone would misclassify dotless third-party or replaced
+// modules, so the package is additionally confirmed to resolve under GOROOT/src.
+// When that source tree is unavailable (e.g. a standalone binary running without
+// a Go installation), it falls back to the list embedded at build time. Either
+// way it never invokes the go command, keeping classification independent of the
+// Go version targeted by the project being processed.
+func isStandardPackage(pkg string) bool {
+	firstElement, _, _ := strings.Cut(pkg, "/")
+	if strings.Contains(firstElement, ".") {
+		return false
 	}
 
-	return err
-}
+	srcDir := filepath.Join(build.Default.GOROOT, "src")
+	if info, err := os.Stat(srcDir); err == nil && info.IsDir() {
+		pkgInfo, statErr := os.Stat(filepath.Join(srcDir, pkg))
+		return statErr == nil && pkgInfo.IsDir()
+	}
 
-// isStandardPackage checks if a package string is included in the standardPackages map
-func isStandardPackage(pkg string) bool {
-	standardPackagesMutex.Lock()
 	_, ok := standardPackages[pkg]
-	standardPackagesMutex.Unlock()
 	return ok
 }
 

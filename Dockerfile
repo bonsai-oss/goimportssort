@@ -2,6 +2,7 @@ FROM golang AS builder
 WORKDIR /build
 COPY . .
 ENV CGO_ENABLED=0
+RUN go generate ./...
 RUN go build -o /bin/goimportssort -trimpath -ldflags '-s -w' .
 RUN strip /bin/goimportssort
 

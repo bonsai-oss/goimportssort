@@ -17,6 +17,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
 
+      - name: Verify generated files are up to date
+        run: |
+          go generate ./...
+          git diff --exit-code
+
       - name: Build
         run: go build -v ./...
 
