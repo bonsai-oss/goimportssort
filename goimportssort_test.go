@@ -357,6 +357,30 @@ func TestStandardPackagesGoVersion(t *testing.T) {
 		"embedded list must record the Go version it was generated from, got %q", standardPackagesGoVersion)
 }
 
+func TestProcessFile_PreservesGoDirectiveAboveImports(t *testing.T) {
+	asserts := assert.New(t)
+	*localPrefix = "github.com/bonsai-oss/goimportssort"
+
+	reader := strings.NewReader(`package main
+
+//go:generate go run gen_stdpackages.go
+
+import (
+	"os"
+	"fmt"
+)
+
+func main() { fmt.Fprintln(os.Stdout) }
+`)
+	output, err := processFile("", reader, os.Stdout)
+	asserts.Equal(nil, err)
+
+	out := string(output)
+	asserts.Contains(out, "//go:generate go run gen_stdpackages.go")
+	asserts.Less(strings.Index(out, "//go:generate"), strings.Index(out, "import ("),
+		"directive must stay above the import block")
+}
+
 func TestGetModuleName(t *testing.T) {
 	asserts := assert.New(t)
 
